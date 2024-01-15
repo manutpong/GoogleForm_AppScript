@@ -1,0 +1,21 @@
+monthly 1st appscript backup file to after folder
+
+*-************************************************
+  
+// ไฟล์ที่จะ Backup
+const srcGsId = "" 
+// โฟลเดอร์ปลายทาง
+const dstFolderId = ""     
+
+function archivecopy() {
+   const backupDateTime = Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd_HH-mm-ss")
+  const ssSrcToBackup = SpreadsheetApp.openById(srcGsId)
+  const ssCopyOfBackup = ssSrcToBackup.copy(backupDateTime + "_" + ssSrcToBackup.getName())
+  const ssCopyOfBackupId = ssCopyOfBackup.getId()  
+  
+  const driveCopyOfBackup = DriveApp.getFileById(ssCopyOfBackupId)
+  const dstFolder = DriveApp.getFolderById(dstFolderId)
+  driveCopyOfBackup.moveTo(dstFolder)
+  
+}
+
