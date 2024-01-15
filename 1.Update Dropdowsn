@@ -1,0 +1,60 @@
+ข้อมูลประกอบด้วย ไฟล์ข้อมูลหลักถังดับเพลิง และ การตรวจสอบ
+when add data to master Appscript Copy Update to Slave data 
+.
+1.Create AppScript in google sheet
+
+var sheetId = "xxx"; //ID Google sheet
+var formId = "xxx"; // ID Google form ที่ต้องการ update
+
+
+var sheetName = "หมายเลขถังดับเพลิง";
+var colname = "หมายเลขครุภัณฑ์";
+
+var workSheet = SpreadsheetApp.openById(sheetId).getSheetByName(sheetName);
+var form = FormApp.openById(formId);
+
+
+// get data Depart
+function main() { 
+  var lastColumn = workSheet.getLastColumn();
+  var labels = workSheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  
+  labels.forEach(function(label, i) {
+    if (label == colname){
+    var lastRow = workSheet.getLastRow();
+    var options = workSheet
+                  .getRange(2, i + 1, lastRow - 1, 1)
+                  .getValues()
+                  .map(function (o) {return o[0]})
+                  .filter(function (o) {return o !== ""});
+    
+    updateDropdownUsingTitle(label, options);
+
+    }
+  });
+}
+
+
+function updateDropdownUsingTitle(title, values) {
+  // QR1
+  var items = form.getItems();
+  var titles = items.map(function(item) {
+    return item.getTitle();
+  });
+  
+  var position = titles.indexOf(title);
+  var item = items[position];
+  var itemId = item.getId();
+      
+  updateDropdown(itemId, values);
+ 
+}
+
+
+
+function updateDropdown(id, values) {
+  //var items = form.getItems();
+  //Logger.log(items[0].getId().toString());
+  var item = form.getItemById(id);
+  item.asListItem().setChoiceValues(values);
+}
