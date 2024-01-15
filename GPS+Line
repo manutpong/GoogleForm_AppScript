@@ -1,0 +1,144 @@
+1. in google form goto apps script add Code
+        // Google Form บันทึกพิกัด ละติจูด, ลองติจูด เก็บข้อมูลลง Google Sheet
+        // เครดิต : Khizer Mehmood วิดีโอสอน :  https://www.youtube.com/watch?v=J93uww0vMFY
+        // โค้ด gs 
+        function doGet() {
+        return HtmlService.createHtmlOutputFromFile('Index');
+        }
+        function getLoc(value) {
+        var destId = FormApp.getActiveForm().getDestinationId() ;
+        var ss = SpreadsheetApp.openById(destId) ;
+        var respSheet = ss.getSheets()[0] ;
+        var data = respSheet.getDataRange().getValues() ;
+        var headers = data[0] ;
+        var numColumns = headers.length ;
+        var numResponses = data.length;
+        var c=value[0];
+        var d=value[1];
+        var e=c + "," + d ;
+        var timeZone = Session.getScriptTimeZone();
+        
+          if (respSheet.getRange(1,numColumns).getValue()=="GeoAddress") {
+        //fill data for second respondents onwards no missing geo data
+        // time here is Jakarta, you may need to change time to your local time (in GMT)
+         
+          if (respSheet.getRange(numResponses,numColumns-2).getValue()=="" && respSheet.getRange(numResponses-1,numColumns-2).getValue()!="" ){
+                respSheet.getRange(numResponses,numColumns-2).setValue(Utilities.formatDate(new Date(), timeZone, "MM/dd/yyyy HH:mm:ss"));
+                respSheet.getRange(numResponses,numColumns-1).setValue(e);
+                var response = Maps.newGeocoder().reverseGeocode(value[0], value[1]);
+                f= response.results[0].formatted_address;
+                respSheet.getRange(numResponses,numColumns).setValue(f);
+          }
+          //fill data with previous geo data missing. red font
+         
+          else if (respSheet.getRange(numResponses,numColumns-2).getValue()=="" && respSheet.getRange(numResponses-1,numColumns-2).getValue()=="" ){
+                respSheet.getRange(numResponses,numColumns-2).setValue(Utilities.formatDate(new Date(), timeZone, "MM/dd/yyyy HH:mm:ss")).setFontColor("red");
+                respSheet.getRange(numResponses,numColumns-1).setValue(e).setFontColor("red");
+        var response = Maps.newGeocoder().reverseGeocode(value[0], value[1]);
+                f= response.results[0].formatted_address;
+                respSheet.getRange(numResponses,numColumns).setValue(f).setFontColor("red");
+        }
+         
+          //to fill missing previous data. red font
+         
+          else if (respSheet.getRange(numResponses,numColumns-2).getValue()!=""){
+         
+            for (i = 0; i < numResponses; i++) {
+        if (respSheet.getRange(numResponses-i,numColumns-2).getValue()=="") {
+        respSheet.getRange(numResponses-i,numColumns-2).setValue(Utilities.formatDate(new Date(), timeZone, "MM/dd/yyyy HH:mm:ss")).setFontColor("red");
+        respSheet.getRange(numResponses-i,numColumns-1).setValue(e).setFontColor("red");
+        var response = Maps.newGeocoder().reverseGeocode(value[0], value[1]);
+        f= response.results[0].formatted_address;
+        respSheet.getRange(numResponses-i,numColumns).setValue(f).setFontColor("red");
+        break; }
+        }
+        }
+        }
+         
+         
+          else if (respSheet.getRange(1,numColumns).getValue()!="GeoAddress") {
+        //create labels in first row
+        respSheet.getRange(1,numColumns+1).setValue("GeoStamp");
+        respSheet.getRange(1,numColumns+2).setValue("GeoCode");
+        respSheet.getRange(1,numColumns+3).setValue("GeoAddress");
+        //fill data for first respondent
+         
+          if (numResponses==2) {
+        respSheet.getRange(numResponses,numColumns+1).setValue(Utilities.formatDate(new Date(), timeZone, "MM/dd/yyyy HH:mm:ss"));
+        respSheet.getRange(numResponses,numColumns+2).setValue(e);
+        var response = Maps.newGeocoder().reverseGeocode(value[0], value[1]);
+        f= response.results[0].formatted_address;
+        respSheet.getRange(numResponses,numColumns+3).setValue(f);
+        }
+         
+          else if (numResponses > 2){
+        respSheet.getRange(numResponses,numColumns+1).setValue(Utilities.formatDate(new Date(), timeZone, "MM/dd/yyyy HH:mm:ss")).setFontColor("red");
+        respSheet.getRange(numResponses,numColumns+2).setValue(e).setFontColor("red");
+        var response = Maps.newGeocoder().reverseGeocode(value[0], value[1]);
+        f= response.results[0].formatted_address;
+        respSheet.getRange(numResponses,numColumns+3).setValue(f).setFontColor("red");
+        }
+        }
+         Utilities.sleep(5000);
+        GoogleFormToLine();
+        }
+        
+        function GoogleFormToLine(){
+              var destId = FormApp.getActiveForm().getDestinationId() ;
+              var ss = SpreadsheetApp.openById(destId) ;
+              var respSheet = ss.getSheets()[0] ;
+              var data = respSheet.getDataRange().getValues() ;
+              var headers = data[0] ;
+              var numColumns = headers.length ;
+              var numResponses = data.length;
+              var message ="แบบตรวจสอบถังดับเพลิงอิเล็กทรอนิกส์";
+                for(var i=0;i<=numColumns-1;i++){
+                  var item = headers[i]
+                  var value = data[numResponses-1][i]
+                  if (value != "")message += "\n"+item+" = "+value; 
+                }
+                SendToLine(message);
+        //  }
+        }
+        
+        function SendToLine(message){
+         
+          var token = "1d2aTcQpB5i8OEamtBDbgwyYMzX6yV9VajDvlbaSrMB"; // my token
+          var op =
+            {
+              "method" : "post",
+              "Content-Type" : "application/x-www-form-urlencoded",
+              "payload": "message=" + message,
+              "headers":{"Authorization" : "Bearer " + token}
+            };
+          var res = UrlFetchApp.fetch("https://notify-api.line.me/api/notify",op);
+          Logger.log(JSON.parse(res.getContentText())); //Response
+        }
+
+2.Create webapp index.htmi
+<!DOCTYPE html>
+<html>
+<script>
+(function getLocation() {
+  if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(showPosition);
+  }
+})()
+function showPosition(position) {
+ var a= position.coords.latitude;
+ var b= position.coords.longitude;
+ var c=[a,b]
+ getPos(c)
+ function getPos(value) {
+ google.script.run.getLoc(value);
+ //google.script.run.GoogleFormToLine();
+ }
+}
+</script>
+<body>
+<p> บันทึกพิกัดตำแหน่งดำเนินการเรียบร้อย </p>
+</body>
+</html>
+
+3.Deploy Program get link to google form
+
