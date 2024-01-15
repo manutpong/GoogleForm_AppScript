@@ -1,0 +1,45 @@
+if google form add data to google sheet  Program sand line alert 
+*****************************************
+
+function GoogleFormToLine1(){
+  var mysheet = "หมายเลขถังดับเพลิง";
+  var actualSheetName = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getName(); // get sheet name
+
+      if (mysheet == actualSheetName){
+
+      var sheet = SpreadsheetApp.getActiveSheet(); 
+      var row = sheet.getLastRow(); 
+      var column = sheet.getLastColumn();
+      var range = sheet.getDataRange();
+      var message = "แบบลงทะเบียนถังดับเพลิงโรงพยาบาลแม่จัน";
+          for(var i=1;i<=column;i++){
+            var item = range.getCell(1, i).getValue(); 
+            var value = range.getCell(row, i).getValue(); 
+            if(item == "ประทับเวลา"){
+              var timeZone = Session.getScriptTimeZone();
+              value = Utilities.formatDate(value,timeZone,"dd/MM/yyyy(E) HH:mm:ss");
+            }
+            if (value != ""){
+            message += "\n"+item+" = "+value; 
+            }
+          }
+          SendToLine1(message);
+  }
+}
+
+
+
+
+function SendToLine1(message){
+ 
+  var token = "Token"; // my token
+  var op =
+    {
+      "method" : "post",
+      "Content-Type" : "application/x-www-form-urlencoded",
+      "payload": "message=" + message,
+      "headers":{"Authorization" : "Bearer " + token}
+    };
+  var res = UrlFetchApp.fetch("https://notify-api.line.me/api/notify",op);
+  Logger.log(JSON.parse(res.getContentText())); //Response
+}
